@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 三连消游戏</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- 标题区域 -->
+        <header class="game-header">
+            <h1 class="game-title">
+                <span class="title-icon">🎮</span>
+                三连消游戏
+                <span class="title-icon">🎯</span>
+            </h1>
+            <p class="game-subtitle">Match 3 Puzzle Game</p>
+        </header>
+
+        <!-- 分数面板 -->
+        <div class="score-panel">
+            <div class="score-box current">
+                <span class="score-label">当前分数</span>
+                <span class="score-value" id="score">0</span>
+            </div>
+            <div class="score-box best">
+                <span class="score-label">🏆 最高分</span>
+                <span class="score-value" id="bestScore">0</span>
+            </div>
+        </div>
+        
+        <!-- 连击和计时器 -->
+        <div class="combo-timer-panel">
+            <div class="combo-box" id="comboBox" style="display: none;">
+                <span class="combo-label">连击</span>
+                <span class="combo-value" id="comboCount">0</span>
+                <span class="combo-multiplier" id="comboMultiplier">x1</span>
+            </div>
+            <div class="timer-box" id="timerBox">
+                <span class="timer-label">⏱️ 时间</span>
+                <span class="timer-value" id="timerDisplay">02:00</span>
+            </div>
+        </div>
+
+        <!-- 游戏画布 -->
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas"></canvas>
+            <div class="canvas-glow"></div>
+        </div>
+
+        <!-- 游戏模式选择 -->
+        <div class="mode-selector">
+            <label class="mode-label">
+                <input type="radio" name="gameMode" value="timed" checked>
+                <span class="mode-option">⏱️ 限时模式</span>
+            </label>
+            <label class="mode-label">
+                <input type="radio" name="gameMode" value="endless">
+                <span class="mode-option">♾️ 无限模式</span>
+            </label>
+        </div>
+        
+        <!-- 控制按钮 -->
+        <div class="controls">
+            <button id="startBtn" class="btn btn-primary">
+                <span class="btn-icon">▶️</span> 开始游戏
+            </button>
+            <button id="resetBtn" class="btn btn-secondary">
+                <span class="btn-icon">🔄</span> 重置
+            </button>
+        </div>
+        
+        <!-- 音效控制 -->
+        <div class="sound-controls">
+            <button id="soundBtn" class="btn btn-icon" title="音效开关">
+                <span class="btn-icon" id="soundIcon">🔊</span>
+            </button>
+            <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="50" title="音量">
+        </div>
+
+        <!-- 游戏说明 -->
+        <div class="game-info">
+            <details class="info-details">
+                <summary class="info-summary">
+                    <span class="summary-icon">📖</span> 游戏说明
+                </summary>
+                <div class="info-content">
+                    <ul class="info-list">
+                        <li>🔹 点击相邻的方块进行交换</li>
+                        <li>🔹 将 3 个或更多相同方块连成一线即可消除</li>
+                        <li>🔹 消除越多，得分越高</li>
+                        <li>🔹 挑战你的最高分！</li>
+                    </ul>
+                </div>
+            </details>
+        </div>
+
+        <!-- 页脚 -->
+        <footer class="game-footer">
+            <p>Made with ❤️ by OpenClaw</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
