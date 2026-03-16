@@ -5,6 +5,58 @@
 
 ---
 
+## 🚨 紧急修复（2026-03-16 10:50）
+
+### 问题 3：脚本加载顺序错误 ✅
+
+**症状**: 
+- Console 报错：`Uncaught TypeError: Cannot read properties of undefined (reading '0') at drawBoard (script.js:649:34)`
+- 游戏画面有遮罩，显示模糊不清
+
+**根本原因**:
+1. **常量定义顺序错误**：`BOARD_SIZE`, `TILE_SIZE` 等常量在第 149 行定义，但 `setupCanvas()` 函数在第 5-13 行就使用了它们
+2. **board 未初始化就访问**：`gameLoop()` 在游戏未开始时不断调用 `drawBoard()`，但此时 `board` 数组还是空的
+3. **重复绘制遮罩**：`drawBoard` 被重写后，每次调用都会额外调用 `drawStartPrompt()`，导致遮罩绘制两次
+
+**修复方案**:
+1. **移动常量定义**：将 `BOARD_SIZE`, `TILE_SIZE`, `TILE_PADDING`, `ANIMATION_SPEED`, `TILE_EMOJIS`, `TILE_COLORS`, `SPECIAL_TYPES` 移至文件顶部（第 5-22 行）
+2. **添加保护检查**：`drawBoard()` 函数开始时检查 `board` 是否已初始化
+3. **移除重复绘制**：删除重写的 `drawBoard` 函数
+
+**关键代码变更**:
+```javascript
+// ===== 游戏配置 =====
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// 常量移至顶部
+const BOARD_SIZE = 8;
+const TILE_SIZE = 60;
+// ...
+
+// drawBoard() 添加保护检查
+function drawBoard() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // 如果 board 未初始化，只绘制背景遮罩
+    if (!board || board.length === 0) {
+        drawStartPrompt();
+        return;
+    }
+    // ...
+}
+
+// 移除重复的 drawBoard 重写
+// 删除了以下代码：
+// const originalDrawBoard = drawBoard;
+// drawBoard = function() {
+//     originalDrawBoard();
+//     drawStartPrompt();
+// };
+```
+
+---
+
 ## 🐛 修复的问题
 
 ### 问题 1：红色圆点识别错误 ✅
