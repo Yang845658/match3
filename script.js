@@ -335,6 +335,31 @@ class FloatingText {
         this.alpha = 1;
         this.yOffset = 0;
         this.scale = 0.8;
+        this.life = 50; // 生命周期帧数
+    }
+    
+    update() {
+        this.yOffset += 2;
+        this.alpha -= 0.02;
+        this.scale += 0.01;
+        this.life--;
+    }
+    
+    isDead() {
+        return this.alpha <= 0 || this.life <= 0;
+    }
+    
+    draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.fillStyle = this.color;
+        ctx.font = 'bold 24px "Microsoft YaHei", sans-serif';
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 10;
+        ctx.translate(this.x, this.y - this.yOffset);
+        ctx.scale(this.scale, this.scale);
+        ctx.fillText(this.text, 0, 0);
+        ctx.restore();
     }
 }
 
@@ -347,6 +372,7 @@ class Particle {
         this.vy = (Math.random() - 0.5) * 8;
         this.alpha = 1;
         this.size = Math.random() * 6 + 3;
+        this.life = 50; // 生命周期帧数
     }
     
     update() {
@@ -355,6 +381,11 @@ class Particle {
         this.vy += 0.2; // 重力
         this.alpha -= 0.02;
         this.size *= 0.95;
+        this.life--;
+    }
+    
+    isDead() {
+        return this.alpha <= 0 || this.life <= 0;
     }
     
     draw(ctx) {
@@ -382,21 +413,19 @@ function createParticles(x, y, color, count = 8) {
 }
 
 function updateAnimations() {
-    // 更新浮动文字
+    // 更新浮动文字 - 使用 isDead() 统一判断
     for (let i = floatingTexts.length - 1; i >= 0; i--) {
         const ft = floatingTexts[i];
-        ft.yOffset += 2;
-        ft.alpha -= 0.02;
-        ft.scale += 0.01;
-        if (ft.alpha <= 0) {
+        ft.update();
+        if (ft.isDead()) {
             floatingTexts.splice(i, 1);
         }
     }
     
-    // 更新粒子
+    // 更新粒子 - 使用 isDead() 统一判断
     for (let i = particles.length - 1; i >= 0; i--) {
         particles[i].update();
-        if (particles[i].alpha <= 0) {
+        if (particles[i].isDead()) {
             particles.splice(i, 1);
         }
     }
@@ -637,19 +666,9 @@ function drawBoard() {
     // 绘制动画效果
     updateAnimations();
     
-    // 绘制浮动文字
+    // 绘制浮动文字 - 使用统一的 draw() 方法
     for (const ft of floatingTexts) {
-        ctx.save();
-        ctx.globalAlpha = ft.alpha;
-        ctx.fillStyle = ft.color;
-        ctx.font = 'bold 24px "Microsoft YaHei", sans-serif';
-        ctx.shadowColor = ft.color;
-        ctx.shadowBlur = 10;
-        ctx.translate(ft.x, ft.y - ft.yOffset);
-        ctx.scale(ft.scale, ft.scale);
-        ctx.fillText(ft.text, 0, 0);
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.restore();
+        ft.draw(ctx);
     }
     
     // 绘制粒子
@@ -723,95 +742,143 @@ async function swapTilesAnimated(tile1, tile2) {
 function checkMatches() {
     const foundMatches = [];
     const tilesToRemoveSet = new Set();
-    let specialTileInfo = null; // 只创建一个特殊方块
+    let specialTileInfo = null;
     let maxMatchLength = 0;
     
-    const getTileTypeSafe = (x, y) => {
-        if (x >= 0 && x < BOARD_SIZE && y >= 0 && y < BOARD_SIZE && board[y][x] && !board[y][x].isMatched) {
-            return board[y][x].type;
-        }
-        return null;
+    // 辅助函数：安全获取方块类型（数字类型直接比较）
+    const getTileType = (x, y) => {
+        if (x < 0 || x >= BOARD_SIZE || y < 0 || y >= BOARD_SIZE) return null;
+        const tile = board[y][x];
+        if (!tile || tile.isMatched) return null;
+        return tile.type; // 直接返回数字类型
     };
     
+    // ===== 横向检查（完全分离）=====
     for (let y = 0; y < BOARD_SIZE; y++) {
-        for (let x = 0; x < BOARD_SIZE; x++) {
-            const currentTileType = getTileTypeSafe(x, y);
-            if (!currentTileType) continue;
+        for (let x = 0; x <= BOARD_SIZE - 3; x++) {
+            const t1 = board[y][x], t2 = board[y][x+1], t3 = board[y][x+2];
+            if (!t1 || !t2 || !t3 || t1.isMatched || t2.isMatched || t3.isMatched) continue;
             
-            // 横向检查
-            if (x < BOARD_SIZE - 2) {
-                let hMatchLength = 0;
-                for (let i = x; i < BOARD_SIZE; i++) {
-                    if (getTileTypeSafe(i, y) === currentTileType) {
-                        hMatchLength++;
-                    } else {
-                        break;
-                    }
+            // 直接比较 type 数字
+            if (t1.type === t2.type && t1.type === t3.type) {
+                const matchType = t1.type;
+                let matchLength = 3;
+                
+                // 向右扩展
+                for (let i = x + 3; i < BOARD_SIZE; i++) {
+                    const tile = board[y][i];
+                    if (!tile || tile.isMatched || tile.type !== matchType) break;
+                    matchLength++;
                 }
-                if (hMatchLength >= 3) {
-                    for (let i = 0; i < hMatchLength; i++) {
-                        tilesToRemoveSet.add(`${x + i},${y}`);
-                    }
-                    // 5 个 = 彩虹，4 个 = 横向消除
-                    if (hMatchLength >= 5 && hMatchLength > maxMatchLength) {
-                        maxMatchLength = hMatchLength;
-                        specialTileInfo = { x: x + Math.floor(hMatchLength / 2), y: y, type: SPECIAL_TYPES.RAINBOW };
-                    } else if (hMatchLength === 4 && maxMatchLength < 5) {
-                        maxMatchLength = hMatchLength;
-                        specialTileInfo = { x: x + Math.floor(hMatchLength / 2), y: y, type: SPECIAL_TYPES.LINE_HORIZONTAL };
-                    }
+                
+                // 添加到消除集合
+                for (let i = 0; i < matchLength; i++) {
+                    tilesToRemoveSet.add(`${x + i},${y}`);
                 }
-            }
-            
-            // 纵向检查
-            if (y < BOARD_SIZE - 2) {
-                let vMatchLength = 0;
-                for (let i = y; i < BOARD_SIZE; i++) {
-                    if (getTileTypeSafe(x, i) === currentTileType) {
-                        vMatchLength++;
-                    } else {
-                        break;
-                    }
-                }
-                if (vMatchLength >= 3) {
-                    for (let i = 0; i < vMatchLength; i++) {
-                        tilesToRemoveSet.add(`${x},${y + i}`);
-                    }
-                    // 5 个 = 彩虹，4 个 = 纵向消除
-                    if (vMatchLength >= 5 && vMatchLength > maxMatchLength) {
-                        maxMatchLength = vMatchLength;
-                        specialTileInfo = { x: x, y: y + Math.floor(vMatchLength / 2), type: SPECIAL_TYPES.RAINBOW };
-                    } else if (vMatchLength === 4 && maxMatchLength < 5) {
-                        maxMatchLength = vMatchLength;
-                        specialTileInfo = { x: x, y: y + Math.floor(vMatchLength / 2), type: SPECIAL_TYPES.LINE_VERTICAL };
-                    }
+                
+                // 创建特殊方块（只记录最长的）
+                if (matchLength >= 5 && matchLength > maxMatchLength) {
+                    maxMatchLength = matchLength;
+                    specialTileInfo = { x: x + Math.floor(matchLength / 2), y: y, type: SPECIAL_TYPES.RAINBOW };
+                } else if (matchLength === 4 && maxMatchLength < 4) {
+                    maxMatchLength = matchLength;
+                    specialTileInfo = { x: x + Math.floor(matchLength / 2), y: y, type: SPECIAL_TYPES.LINE_HORIZONTAL };
                 }
             }
         }
     }
     
-    // 检测 L/T 形状（炸弹）
-    for (let y = 0; y < BOARD_SIZE; y++) {
-        for (let x = 0; x < BOARD_SIZE; x++) {
-            const currentTileType = getTileTypeSafe(x, y);
-            if (!currentTileType) continue;
+    // ===== 纵向检查（完全分离）=====
+    for (let x = 0; x < BOARD_SIZE; x++) {
+        for (let y = 0; y <= BOARD_SIZE - 3; y++) {
+            const t1 = board[y][x], t2 = board[y+1][x], t3 = board[y+2][x];
+            if (!t1 || !t2 || !t3 || t1.isMatched || t2.isMatched || t3.isMatched) continue;
             
-            // 检查横向和纵向的组合
-            let hLength = 0, vLength = 0;
-            
-            for (let i = x; i < BOARD_SIZE && getTileTypeSafe(i, y) === currentTileType; i++) hLength++;
-            for (let i = y; i < BOARD_SIZE && getTileTypeSafe(x, i) === currentTileType; i++) vLength++;
-            
-            // L/T 形状：横向 3+ 纵向 3，且总共 5 个方块
-            if (hLength >= 3 && vLength >= 3 && (hLength + vLength - 1) >= 5) {
-                specialTileInfo = { x, y, type: SPECIAL_TYPES.BOMB };
-                // 添加 L 形所有方块到消除列表
-                for (let i = 0; i < hLength; i++) tilesToRemoveSet.add(`${x + i},${y}`);
-                for (let i = 0; i < vLength; i++) tilesToRemoveSet.add(`${x},${y + i}`);
+            // 直接比较 type 数字
+            if (t1.type === t2.type && t1.type === t3.type) {
+                const matchType = t1.type;
+                let matchLength = 3;
+                
+                // 向下扩展
+                for (let i = y + 3; i < BOARD_SIZE; i++) {
+                    const tile = board[i][x];
+                    if (!tile || tile.isMatched || tile.type !== matchType) break;
+                    matchLength++;
+                }
+                
+                // 添加到消除集合
+                for (let i = 0; i < matchLength; i++) {
+                    tilesToRemoveSet.add(`${x},${y + i}`);
+                }
+                
+                // 创建特殊方块（只记录最长的）
+                if (matchLength >= 5 && matchLength > maxMatchLength) {
+                    maxMatchLength = matchLength;
+                    specialTileInfo = { x: x, y: y + Math.floor(matchLength / 2), type: SPECIAL_TYPES.RAINBOW };
+                } else if (matchLength === 4 && maxMatchLength < 4) {
+                    maxMatchLength = matchLength;
+                    specialTileInfo = { x: x, y: y + Math.floor(matchLength / 2), type: SPECIAL_TYPES.LINE_VERTICAL };
+                }
             }
         }
     }
     
+    // ===== L/T 形检测（炸弹）=====
+    // 从每个方块向四个方向扩展
+    for (let cy = 1; cy < BOARD_SIZE - 1; cy++) {
+        for (let cx = 1; cx < BOARD_SIZE - 1; cx++) {
+            const centerTile = board[cy][cx];
+            if (!centerTile || centerTile.isMatched) continue;
+            
+            const centerType = centerTile.type;
+            
+            // 向四个方向扩展
+            let hLeft = 0, hRight = 0, vUp = 0, vDown = 0;
+            
+            // 向左
+            for (let i = cx - 1; i >= 0; i--) {
+                const tile = board[cy][i];
+                if (!tile || tile.isMatched || tile.type !== centerType) break;
+                hLeft++;
+            }
+            // 向右
+            for (let i = cx + 1; i < BOARD_SIZE; i++) {
+                const tile = board[cy][i];
+                if (!tile || tile.isMatched || tile.type !== centerType) break;
+                hRight++;
+            }
+            // 向上
+            for (let i = cy - 1; i >= 0; i--) {
+                const tile = board[i][cx];
+                if (!tile || tile.isMatched || tile.type !== centerType) break;
+                vUp++;
+            }
+            // 向下
+            for (let i = cy + 1; i < BOARD_SIZE; i++) {
+                const tile = board[i][cx];
+                if (!tile || tile.isMatched || tile.type !== centerType) break;
+                vDown++;
+            }
+            
+            const hTotal = hLeft + hRight + 1; // 横向总数（含中心）
+            const vTotal = vUp + vDown + 1;    // 纵向总数（含中心）
+            
+            // L/T 形条件：横向 3+ 纵向 3，或总方块数 >= 5
+            if (hTotal >= 3 && vTotal >= 3 && (hTotal + vTotal - 1) >= 5) {
+                specialTileInfo = { x: cx, y: cy, type: SPECIAL_TYPES.BOMB };
+                // 添加横向所有方块
+                for (let i = cx - hLeft; i <= cx + hRight; i++) {
+                    tilesToRemoveSet.add(`${i},${cy}`);
+                }
+                // 添加纵向所有方块
+                for (let i = cy - vUp; i <= cy + vDown; i++) {
+                    tilesToRemoveSet.add(`${cx},${i}`);
+                }
+            }
+        }
+    }
+    
+    // 转换为数组
     for (const key of tilesToRemoveSet) {
         const [x, y] = key.split(',').map(Number);
         foundMatches.push({ x, y });
