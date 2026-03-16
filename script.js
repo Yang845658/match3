@@ -2,6 +2,24 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+const BOARD_SIZE = 8;
+const TILE_SIZE = 60;
+const TILE_PADDING = 4;
+const ANIMATION_SPEED = 0.25;
+
+// 使用 Emoji 图标替代颜色
+const TILE_EMOJIS = ['🔴', '🔵', '🟢', '', '🟡', '⭐', '💎'];
+const TILE_COLORS = ['#ff4757', '#3742fa', '#2ed573', '#a55eea', '#ffa502', '#ffd700', '#00d9ff'];
+
+// 特殊方块类型
+const SPECIAL_TYPES = {
+    NONE: null,
+    LINE_HORIZONTAL: 'line_horizontal',  // 4 个横向 - 消除整行
+    LINE_VERTICAL: 'line_vertical',        // 4 个纵向 - 消除整列
+    BOMB: 'bomb',                          // 5 个/L 形 - 3x3 范围爆炸
+    RAINBOW: 'rainbow'                     // 5 个直线 - 消除同色所有
+};
+
 // 强制设置画布尺寸，避免渲染延迟
 function setupCanvas() {
     const dpr = window.devicePixelRatio || 1;
@@ -146,25 +164,6 @@ function setVolume(volume) {
     }
 }
 
-const BOARD_SIZE = 8;
-const TILE_SIZE = 60;
-const TILE_PADDING = 4;
-const ANIMATION_SPEED = 0.25;
-
-// 使用 Emoji 图标替代颜色
-const TILE_EMOJIS = ['🔴', '🔵', '🟢', '🟣', '🟡', '⭐', '💎'];
-const TILE_COLORS = ['#ff4757', '#3742fa', '#2ed573', '#a55eea', '#ffa502', '#ffd700', '#00d9ff'];
-
-// 特殊方块类型
-const SPECIAL_TYPES = {
-    NONE: null,
-    LINE_HORIZONTAL: 'line_horizontal',  // 4 个横向 - 消除整行
-    LINE_VERTICAL: 'line_vertical',        // 4 个纵向 - 消除整列
-    BOMB: 'bomb',                          // 5 个/L 形 - 3x3 范围爆炸
-    RAINBOW: 'rainbow'                     // 5 个直线 - 消除同色所有
-};
-
-// 画布尺寸在 setupCanvas 中设置
 
 // ===== 游戏状态 =====
 let board = [];
@@ -629,6 +628,12 @@ function initBoard() {
 function drawBoard() {
     // 清空画布
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // 如果 board 未初始化，只绘制背景遮罩
+    if (!board || board.length === 0) {
+        drawStartPrompt();
+        return;
+    }
     
     // 绘制网格背景
     for (let y = 0; y < BOARD_SIZE; y++) {
@@ -1233,13 +1238,6 @@ function drawStartPrompt() {
         ctx.fillText('开始挑战！', canvas.width / 2, canvas.height / 2 + 20);
     }
 }
-
-// 重写 drawBoard 添加开始提示
-const originalDrawBoard = drawBoard;
-drawBoard = function() {
-    originalDrawBoard();
-    drawStartPrompt();
-};
 
 // ===== 初始化 =====
 setupCanvas();
