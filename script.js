@@ -1,4 +1,55 @@
-// ===== 游戏配置 =====
+// ===== 背景粒子系統（新增） =====
+const backgroundParticles = [];
+
+class BackgroundParticle {
+    constructor() {
+        this.reset();
+    }
+    
+    reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 3 + 1;
+        this.speedX = (Math.random() - 0.5) * 0.5;
+        this.speedY = (Math.random() - 0.5) * 0.5;
+        this.alpha = Math.random() * 0.5 + 0.2;
+        this.color = `hsla(${Math.random() * 60 + 180}, 100%, 50%, ${this.alpha})`;
+    }
+    
+    update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        
+        // 邊界檢查
+        if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+            this.reset();
+        }
+    }
+    
+    draw(ctx) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+    }
+}
+
+// 初始化背景粒子
+function initBackgroundParticles() {
+    for (let i = 0; i < 50; i++) {
+        backgroundParticles.push(new BackgroundParticle());
+    }
+}
+
+// 繪製背景粒子
+function drawBackgroundParticles(ctx) {
+    backgroundParticles.forEach(p => {
+        p.update();
+        p.draw(ctx);
+    });
+}
+
+// ===== 遊戲配置 =====
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -532,42 +583,42 @@ class Tile {
         ctx.globalAlpha = this.alpha;
         ctx.translate(centerX, centerY);
         
-        // 选中效果：光晕 + 缩放
+        // 選中效果：增強光暈 + 縮放
         if (isSelected) {
-            // 外光晕
-            const glowSize = size * 1.3 + Math.sin(this.wobblePhase) * 3;
+            // 外光暈（增強）
+            const glowSize = size * 1.4 + Math.sin(this.wobblePhase) * 4;
             const gradient = ctx.createRadialGradient(0, 0, size * 0.5, 0, 0, glowSize);
-            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
-            gradient.addColorStop(0.5, 'rgba(255, 217, 0, 0.4)');
-            gradient.addColorStop(1, 'rgba(255, 217, 0, 0)');
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+            gradient.addColorStop(0.5, 'rgba(0, 217, 255, 0.6)');
+            gradient.addColorStop(1, 'rgba(0, 217, 255, 0)');
             ctx.fillStyle = gradient;
             ctx.beginPath();
             ctx.arc(0, 0, glowSize, 0, Math.PI * 2);
             ctx.fill();
             
-            // 内边框
+            // 內邊框（增強）
             ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 3;
-            ctx.shadowColor = '#ffd700';
-            ctx.shadowBlur = 15;
+            ctx.lineWidth = 4;
+            ctx.shadowColor = '#00d9ff';
+            ctx.shadowBlur = 20;
             ctx.strokeRect(-size/2, -size/2, size, size);
             ctx.shadowBlur = 0;
         }
         
-        // 绘制背景（半透明圆角矩形）
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-        ctx.lineWidth = 1;
+        // 繪製背景（提高對比度）
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 2;
         roundRect(ctx, -size/2, -size/2, size, size, 10);
         ctx.fill();
         ctx.stroke();
         
-        // 绘制 Emoji
-        ctx.font = `${size * 0.7}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+        // 繪製 Emoji（增強對比度）
+        ctx.font = `${size * 0.75}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-        ctx.shadowBlur = 4;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        ctx.shadowBlur = 6;
         ctx.fillText(TILE_EMOJIS[this.type], 0, 2);
         ctx.shadowBlur = 0;
         
@@ -629,6 +680,9 @@ function initBoard() {
 function drawBoard() {
     // 清空画布
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 绘制背景粒子（新增）
+    drawBackgroundParticles(ctx);
 
     // 如果 board 未初始化，只绘制背景遮罩
     if (!board || board.length === 0) {
@@ -1242,6 +1296,7 @@ function drawStartPrompt() {
 
 // ===== 初始化 =====
 setupCanvas();
+initBackgroundParticles(); // 新增：初始化背景粒子
 updateScoreDisplay();
 drawBoard();
 
