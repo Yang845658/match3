@@ -63,20 +63,22 @@
         
         <!-- 控制按钮 -->
         <div class="controls">
-            <button id="startBtn" class="btn btn-primary">
-                <span class="btn-icon">▶️</span> 开始游戏
+            <button id="startBtn" class="btn btn-primary" aria-label="▶️ 开始游戏">
+                <span class="btn-icon" aria-hidden="true">▶️</span> 
+                <span>开始游戏</span>
             </button>
-            <button id="resetBtn" class="btn btn-secondary">
-                <span class="btn-icon">🔄</span> 重置
+            <button id="resetBtn" class="btn btn-secondary" aria-label="🔄 重置">
+                <span class="btn-icon" aria-hidden="true">🔄</span> 
+                <span>重置</span>
             </button>
         </div>
         
         <!-- 音效控制 -->
         <div class="sound-controls">
-            <button id="soundBtn" class="btn btn-icon" title="音效开关">
-                <span class="btn-icon" id="soundIcon">🔊</span>
+            <button id="soundBtn" class="btn btn-icon" aria-label="音效开关">
+                <span class="btn-icon" id="soundIcon" aria-hidden="true">🔊</span>
             </button>
-            <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="50" title="音量">
+            <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="50" aria-label="音量控制">
         </div>
 
         <!-- 游戏说明 -->

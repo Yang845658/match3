@@ -23,7 +23,7 @@ test.describe('無障礙測試', () => {
     
     // 檢查主要按鈕是否有可訪問名稱
     const startButton = page.locator('#startBtn');
-    await expect(startButton).toHaveAttribute('aria-label', /開始/i);
+    await expect(startButton).toHaveAttribute('aria-label', /开始/i);
     
     // 檢查計時器是否有標籤
     const timerDisplay = page.locator('#timerDisplay');
@@ -51,7 +51,7 @@ test.describe('無障礙測試', () => {
     // Tab 鍵導航
     await page.keyboard.press('Tab');
     let focusedElement = await page.evaluate(() => document.activeElement.textContent);
-    expect(focusedElement).toContain('開始遊戲');
+    expect(focusedElement).toContain('开始游戏');
     
     await page.keyboard.press('Tab');
     focusedElement = await page.evaluate(() => document.activeElement.textContent);
