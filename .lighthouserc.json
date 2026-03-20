@@ -1,0 +1,36 @@
+{
+  "ci": {
+    "collect": {
+      "staticDistDir": "./",
+      "url": [
+        "http://localhost:8081/index.html"
+      ],
+      "numberOfRuns": 3,
+      "settings": {
+        "preset": "desktop",
+        "chromeFlags": "--headless"
+      }
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance": ["warn", {"minScore": 0.9}],
+        "categories:accessibility": ["warn", {"minScore": 0.9}],
+        "categories:best-practices": ["warn", {"minScore": 0.9}],
+        "categories:seo": ["warn", {"minScore": 0.9}],
+        "first-contentful-paint": ["warn", {"maxNumericValue": 1500}],
+        "largest-contentful-paint": ["warn", {"maxNumericValue": 2500}],
+        "cumulative-layout-shift": ["warn", {"maxNumericValue": 0.1}],
+        "total-byte-weight": ["warn", {"maxNumericValue": 1000000}]
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    },
+    "server": {
+      "command": "python3 -m http.server 8081",
+      "port": 8081,
+      "readyPattern": "Serving HTTP on",
+      "killExisting": true
+    }
+  }
+}

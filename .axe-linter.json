@@ -1,0 +1,21 @@
+{
+  "tags": [
+    "wcag2a",
+    "wcag2aa"
+  ],
+  "rules": {
+    "color-contrast": "error",
+    "label": "error",
+    "link-name": "error",
+    "button-name": "error",
+    "image-alt": "error",
+    "form-field-multiple-labels": "error",
+    "heading-order": "warn",
+    "html-has-lang": "error",
+    "valid-lang": "error"
+  },
+  "ignore": [
+    "*-test.js",
+    "*.spec.js"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "match3-v1.0",
+  "version": "1.0.0",
+  "description": "三連消遊戲 - Match 3 Puzzle Game",
+  "scripts": {
+    "start": "python3 -m http.server 8081",
+    "test": "npm run test:lhci && npm run test:a11y",
+    "test:lhci": "lhci autorun",
+    "test:a11y": "playwright test tests/accessibility.spec.js",
+    "test:headed": "playwright test tests/accessibility.spec.js --headed",
+    "lhci:open-report": "lhci open-report"
+  },
+  "keywords": [
+    "game",
+    "match3",
+    "puzzle",
+    "html5"
+  ],
+  "author": "OpenClaw",
+  "license": "MIT",
+  "devDependencies": {
+    "@lhci/cli": "^0.14.0",
+    "@playwright/test": "^1.40.0",
+    "@axe-core/playwright": "^4.8.2"
+  }
+}
